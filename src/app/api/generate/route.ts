@@ -31,7 +31,10 @@ export async function POST(request: NextRequest) {
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
     .neq("status", "failed");
-  if (countError) return NextResponse.json({ error: "Please try again." }, { status: 500 });
+  if (countError) {
+    console.error("count generations failed", countError);
+    return NextResponse.json({ error: "Please try again." }, { status: 500 });
+  }
   if (!hasFreeVideoLeft(count ?? 0)) {
     return NextResponse.json({ error: "You've used your free video. Paid packs are coming soon." }, { status: 403 });
   }
@@ -39,7 +42,10 @@ export async function POST(request: NextRequest) {
   const { data: signed, error: signError } = await admin.storage
     .from(UPLOAD_BUCKET)
     .createSignedUrl(inputPath, SIGNED_URL_SECONDS);
-  if (signError || !signed) return NextResponse.json({ error: "We couldn't find your photo." }, { status: 400 });
+  if (signError || !signed) {
+    console.error("createSignedUrl failed", inputPath, signError);
+    return NextResponse.json({ error: "We couldn't find your photo." }, { status: 400 });
+  }
 
   const model = MODELS[template.models.free];
   const { data: row, error: insertError } = await admin
@@ -47,7 +53,10 @@ export async function POST(request: NextRequest) {
     .insert({ user_id: user.id, template_slug: template.slug, model_key: model.key, tier: "free", input_path: inputPath })
     .select("id")
     .single();
-  if (insertError || !row) return NextResponse.json({ error: "Please try again." }, { status: 500 });
+  if (insertError || !row) {
+    console.error("insert generation failed", insertError);
+    return NextResponse.json({ error: "Please try again." }, { status: 500 });
+  }
 
   try {
     const requestId = await submitVideoJob(model, {

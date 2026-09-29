@@ -25,5 +25,10 @@ export async function createSupabaseServerClient() {
 export function createSupabaseAdminClient() {
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!key) throw new Error("SUPABASE_SECRET_KEY is not set");
+  if (!key.startsWith("sb_secret_")) {
+    throw new Error(
+      "SUPABASE_SECRET_KEY must be the secret key (starts with sb_secret_) from Supabase Project Settings -> API Keys",
+    );
+  }
   return createClient(supabaseUrl(), key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
