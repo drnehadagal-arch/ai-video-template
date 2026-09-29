@@ -11,6 +11,15 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 const SIGNED_URL_SECONDS = 60 * 60;
 
 export async function POST(request: NextRequest) {
+  try {
+    return await startGeneration(request);
+  } catch (err) {
+    console.error("generate failed", err);
+    return NextResponse.json({ error: "Something went wrong on our side. Please try again." }, { status: 500 });
+  }
+}
+
+async function startGeneration(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Please sign in first." }, { status: 401 });
 

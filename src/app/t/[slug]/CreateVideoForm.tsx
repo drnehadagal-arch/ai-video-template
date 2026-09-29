@@ -46,8 +46,8 @@ export function CreateVideoForm({ templateSlug, userId }: { templateSlug: string
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ templateSlug, inputPath: path, consent }),
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? "Something went wrong.");
+      const body = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
+      if (!res.ok || !body.id) throw new Error(body.error ?? "Something went wrong on our side. Please try again.");
       router.push(`/videos/${body.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
